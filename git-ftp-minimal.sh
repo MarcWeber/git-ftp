@@ -135,17 +135,27 @@ run(){
     case "$M" in
       D|M)
         echo "was file $F touched on remote location?"
-        [ "$(get_file_content "$F" | md5sum)" == "$(git show "$DEPLOYED_SHA1:$F" | md5sum )" ] || {
-            echo -n "$F on server was changed? continue ? [y/n]"
-            read reply
-            [ "$reply" = "y" ] || die "aborting"
-            echo "continuing"
-        }
-        ACTIONS="${ACTIONS}\n$line"
+	get_file_content "$F" > "$TMP_FILE"
+        md5_remote="$(cat $TMP_FILE | md5sum)"
+        md5_local_target="$(git show "$TARGET_SHA1:$F" | md5sum )"
+        md5_local_deployed="$(git show "$DEPLOYED_SHA1:$F" | md5sum )"
+        if [ "$md5_remote" == "$md5_local_target" ]; then
+	  echo "skippping $F, already up to date"
+	else
+          # if the file is not on the remote server yet
+          [  "$md5_remote" == "$md5_local_deployed" ] || {
+              echo -n "$F on server was changed? continue ? [y/n] (md5 local: $md5_local remote: $md5_remote, downloaded to $TMP_FILE)"
+              read reply
+              [ "$reply" = "y" ] || die "aborting"
+              echo "continuing"
+          }
+          ACTIONS="${ACTIONS}\n$line"
+        fi
       ;;
       A)
         # file must not exist!
         
+	echo "does $F already exist on sever?"
         if get_file_content "$F" > "$TMP_FILE"; then
           # file exists, check hash
           md5=$(cat "$TMP_FILE" | md5sum)
@@ -159,7 +169,7 @@ run(){
         else
           rm "$TMP_FILE"
           # expected. file did not exist ?
-          ACTIONS="${ACTIONS}\n$line"
+          ACTIONS="$(echo "$ACTIONS"; echo "$line")"
         fi
       ;;
       *) [ "$line" == "" ] || die "unkown mode '$M' (line: '$line')";;
@@ -210,7 +220,7 @@ EOF
     --initial)
       shift
       set_remote_protocol
-      run "$(git ls-files | sed "s/^/A\t/")"
+      run "$(git ls-files | sed "s/^/A\t/" | filter)"
       echo "$TARGET_SHA1" | upload_file - $DEPLOYED_SHA1_FILE
 
       exit 0
@@ -221,7 +231,7 @@ EOF
       DEPLOYED_SHA1="`get_file_content $DEPLOYED_SHA1_FILE`"
       [ -n "$DEPLOYED_SHA1" ] || die "no DEPLOYED_SHA1 ?"
       git diff --name-status $DEPLOYED_SHA1 $TARGET_SHA1
-      run "`git diff --name-status $DEPLOYED_SHA1 2>/dev/null`" || die "git diff --name-status $DEPLOYED_SHA1_FILE failed - invalid sha1 ?!"
+      run "`git diff --name-status $DEPLOYED_SHA1 2>/dev/null | filter`" || die "git diff --name-status $DEPLOYED_SHA1_FILE failed - invalid sha1 ?!"
       echo "$TARGET_SHA1" | upload_file - $DEPLOYED_SHA1_FILE
 
       exit 0
