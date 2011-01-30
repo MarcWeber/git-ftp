@@ -149,12 +149,12 @@ run(){
         if get_file_content "$F" > "$TMP_FILE"; then
           # file exists, check hash
           md5=$(cat "$TMP_FILE" | md5sum)
-          rm "$TMP_FILE"
           md5_local="$(git show "$TARGET_SHA1:$F" | md5sum)"
           if [ "$md5_local" == "$md5" ]; then
+            rm "$TMP_FILE"
             echo "$F already found on server - md5sums match"
           else
-            die "not overriding file $F on sever which has a different hash. local: $md5_local, remote: $md5"
+            die "not overriding file $F on sever which has a different hash. local: $md5_local, remote: $md5, server version was downloaded into: $TMP_FILE"
           fi
         else
           rm "$TMP_FILE"
