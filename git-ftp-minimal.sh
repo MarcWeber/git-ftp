@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-# KISS version of git-ftp
+# KISS version of git-ftp (original code: https://github.com/resmo/git-ftp)
+# LICENSE: GPLv3
 
 # General config
 DEFAULT_PROTOCOL="ftp"
