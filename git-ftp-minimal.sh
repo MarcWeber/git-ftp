@@ -144,7 +144,7 @@ run(){
 	else
           # if the file is not on the remote server yet
           [  "$md5_remote" == "$md5_local_deployed" ] || {
-              echo -n "$F on server was changed? continue ? [y/n] (md5 local: $md5_local remote: $md5_remote, downloaded to $TMP_FILE)"
+              echo -n "$F on server was changed? continue ? [y/n] (md5 local: $md5_local_deployed -> $md5_local_target remote: $md5_remote, downloaded to $TMP_FILE)"
               read reply
               [ "$reply" = "y" ] || die "aborting"
               echo "continuing"
