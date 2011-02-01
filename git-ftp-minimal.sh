@@ -205,6 +205,7 @@ while [ -n "$1" ]; do
         $0 [-x] [--dry-run] --inital (upload all files and sha1)
         $0 [-x] [--dry-run] --upload-sha1 SHA (upload sha)
         $0 [-x] [--dry-run] --sync           (synchronize from sha1 stored on server targeting \$TARGET_SHA1)
+        $0 [-x] [--dry-run] --sync-back regex (download the files registered in git so that you can commit changes)          
       Files are uploaded / removed only if nobody touched them on the server. This is a bit slower - but also safest.
 EOF
       die "help shown"
@@ -220,7 +221,7 @@ EOF
     --initial)
       shift
       set_remote_protocol
-      run "$(git ls-files | sed "s/^/A\t/" | filter)"
+      run "$( git ls-files --with "$TARGET_SHA1" | sed "s/^/A\t/" | filter)"
       echo "$TARGET_SHA1" | upload_file - $DEPLOYED_SHA1_FILE
 
       exit 0
@@ -234,6 +235,19 @@ EOF
       run "`git diff --name-status $DEPLOYED_SHA1 2>/dev/null | filter`" || die "git diff --name-status $DEPLOYED_SHA1_FILE failed - invalid sha1 ?!"
       echo "$TARGET_SHA1" | upload_file - $DEPLOYED_SHA1_FILE
 
+      exit 0
+    ;;
+    --sync-back)
+      shift
+      regex="$1"; shift
+      set_remote_protocol
+      DEPLOYED_SHA1="`get_file_content $DEPLOYED_SHA1_FILE`"
+      files="$( git ls-files --with "$DEPLOYED_SHA1" | filter | grep -e "$regex" )"
+      echo "downloading files\n$f"
+      while read f; do
+        echo "fetching $f"
+        get_file_content "$f" > "$f"
+      done <<< "$files"
       exit 0
     ;;
     *)
