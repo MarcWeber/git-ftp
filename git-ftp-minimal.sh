@@ -103,7 +103,7 @@ upload_file() {
 
 remove_file() {
   echo "removing $@"
-  if [ -n "$TRY_RUN"]; then
+  if [ -n "$TRY_RUN" ]; then
     echo "dry run - doing nothing"
   else
     FILENAME="$1"
