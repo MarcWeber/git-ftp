@@ -24,7 +24,7 @@ SYSTEM=`uname`
 
 URL="ftp://host.example.com[:<port>][/<remote path>]"
 
-# WILL BE SET automatically
+# overwrite in git-ftp-minimal.config, see below
 REMOTE_PROTOCOL=""
 REMOTE_HOST=""
 REMOTE_USER=""
